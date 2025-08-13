@@ -12,9 +12,17 @@ logger = logging.getLogger(__name__)
 
 
 class C2ContainmentHandler(BaseEC2FindingHandler):
-    """
-    An abstract handler for critical C2 findings that require a full
-    contain, preserve, and eradicate response.
+    """A handler for critical C2 findings that require a full containment workflow.
+
+    This class orchestrates a multi-step incident response plan:
+    1. Contain: Isolates the instance by changing its security group.
+    2. Preserve: Creates an EBS snapshot of the root volume for forensics.
+    3. Eradicate: Terminates the compromised instance.
+    4. Report: Notifies the security team via an SNS topic.
+
+    Attributes:
+        QUARANTINE_SG_ID (str): The ID of the security group to apply for isolation.
+        FORENSICS_TEAM_TOPIC_ARN (str): The ARN of the SNS topic for notifications.
     """
 
     # In a real application, this would be fetched from a config file or SSM Parameter Store
@@ -25,11 +33,7 @@ class C2ContainmentHandler(BaseEC2FindingHandler):
 
     def execute(self) -> None:
         """
-        Executes the full incident response workflow:
-        1. Contain: Isolate the instance.
-        2. Preserve: Snapshot the root volume.
-        3. Eradicate: Terminate the instance.
-        4. Report: Log and notify.
+        Executes the full incident response workflow.
         """
         logger.warning(
             f"Executing C2 containment plan for instance {self.instance_id} due to finding {self.finding.get('Type')}."
@@ -73,7 +77,11 @@ class C2ContainmentHandler(BaseEC2FindingHandler):
         logger.info(f"Instance {self.instance_id} has been isolated.")
 
     def _create_snapshot(self) -> Optional[str]:
-        """Creates a snapshot of the instance's root EBS volume."""
+        """Creates a snapshot of the instance's root EBS volume for forensics.
+
+        Returns:
+            The snapshot ID on success, or None on failure.
+        """
         logger.info(
             f"Creating snapshot for root volume of instance {self.instance_id}."
         )
@@ -112,7 +120,11 @@ class C2ContainmentHandler(BaseEC2FindingHandler):
         logger.warning(f"Instance {self.instance_id} has been terminated.")
 
     def _notify_team(self, snapshot_id: str) -> None:
-        """Sends a report to the forensics team SNS topic."""
+        """Sends a detailed report to the forensics team SNS topic.
+
+        Args:
+            snapshot_id: The ID of the forensic snapshot that was created.
+        """
         logger.info(f"Sending report to SNS topic {self.FORENSICS_TEAM_TOPIC_ARN}.")
         message = (
             f"Automated SOAR Response for GuardDuty Finding\n\n"

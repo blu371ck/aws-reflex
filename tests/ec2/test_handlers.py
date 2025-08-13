@@ -1,6 +1,7 @@
+from unittest.mock import MagicMock
+
 import pytest
 
-from unittest.mock import MagicMock
 from aws_reflex.ec2.factory import get_ec2_handler
 from aws_reflex.ec2.handlers.base_c2_handler import C2ContainmentHandler
 
