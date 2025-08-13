@@ -1,11 +1,12 @@
 import logging
+from typing import Optional
+
 import boto3
+from mypy_boto3_ec2 import EC2Client
+from mypy_boto3_guardduty import GuardDutyClient
+from mypy_boto3_sns import SNSClient
 
 from .base import BaseEC2FindingHandler
-from mypy_boto3_guardduty import GuardDutyClient
-from mypy_boto3_ec2 import EC2Client
-from mypy_boto3_sns import SNSClient
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

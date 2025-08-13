@@ -22,5 +22,6 @@ dev = [
     "isort>=6.0.1",
     "mypy>=1.17.1",
     "pytest>=8.4.1",
+    "pytest-mock>=3.14.1",
     "sphinx>=8.2.3",
 ]
