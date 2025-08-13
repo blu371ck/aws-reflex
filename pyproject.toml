@@ -1,0 +1,14 @@
+[project]
+name = "aws-reflex"
+version = "0.1.0"
+description = "Library package containing classes for different SOAR scenarios."
+readme = "README.md"
+authors = [
+    { name = "Andrew McKenzie", email = "mckenzie.andrew@pm.me" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
