@@ -1,10 +1,12 @@
 import logging
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import boto3
-from mypy_boto3_ec2 import EC2Client
-from mypy_boto3_sns import SNSClient
-from mypy_boto3_ssm import SSMClient
+
+if TYPE_CHECKING:
+    from mypy_boto3_ec2 import EC2Client
+    from mypy_boto3_sns import SNSClient
+    from mypy_boto3_ssm import SSMClient
 
 from .base import BaseEC2FindingHandler
 
