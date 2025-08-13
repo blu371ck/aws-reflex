@@ -3,12 +3,42 @@ from typing import Optional
 
 import boto3
 from mypy_boto3_ec2 import EC2Client
-from mypy_boto3_guardduty import GuardDutyClient
 from mypy_boto3_sns import SNSClient
+from mypy_boto3_ssm import SSMClient
 
 from .base import BaseEC2FindingHandler
 
 logger = logging.getLogger(__name__)
+
+SSM_CACHE: dict = {}
+
+
+def get_ssm_parameter(name: str) -> str:
+    """
+    Fetches a parameter from AWS SSM parameter store, with caching.
+
+    Args:
+        name: The name of the parameter to fetch.
+
+    Returns:
+        The value of the parameter
+
+    Raises:
+        KeyError: if the parameter is not found
+    """
+    if name in SSM_CACHE:
+        return SSM_CACHE[name]
+
+    logger.info(f"Fetching parameter {name} from SSM.")
+    ssm: SSMClient = boto3.client("ssm")
+    try:
+        response = ssm.get_parameter(Name=name)
+        value = response["Parameter"]["Value"]
+        SSM_CACHE[name] = value
+        return value
+    except ssm.exceptions.ParameterNotFound as e:
+        logger.error(f"SSM Parameter {name} is not found.")
+        raise KeyError(f"SSM Parameter {name} is not found.") from e
 
 
 class C2ContainmentHandler(BaseEC2FindingHandler):
@@ -25,11 +55,12 @@ class C2ContainmentHandler(BaseEC2FindingHandler):
         FORENSICS_TEAM_TOPIC_ARN (str): The ARN of the SNS topic for notifications.
     """
 
-    # In a real application, this would be fetched from a config file or SSM Parameter Store
-    QUARANTINE_SG_ID: str = "sg-0123456789abcdef0"  # Example Quarantine Security Group
-    FORENSICS_TEAM_TOPIC_ARN: str = (
-        "arn:aws:sns:us-east-1:111122223333:ForensicsTeamTopic"
-    )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.QUARANTINE_SG_ID: str = get_ssm_parameter("/aws-reflex/quarantine_sg_id")
+        self.FORENSICS_TEAM_TOPIC_ARN: str = get_ssm_parameter(
+            "/aws-reflex/forensics_topic_arn"
+        )
 
     def execute(self) -> None:
         """

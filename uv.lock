@@ -8,7 +8,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },
-    { name = "boto3-stubs", extra = ["ec2", "guardduty", "sns"] },
+    { name = "boto3-stubs", extra = ["ec2", "guardduty", "sns", "ssm"] },
 ]
 
 [package.dev-dependencies]
@@ -23,7 +23,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "boto3", specifier = ">=1.40.8" },
-    { name = "boto3-stubs", extras = ["ec2", "guardduty", "sns"], specifier = ">=1.40.8" },
+    { name = "boto3-stubs", extras = ["ec2", "guardduty", "sns", "ssm"], specifier = ">=1.40.8" },
 ]
 
 [package.metadata.requires-dev]
@@ -91,6 +91,9 @@ guardduty = [
 ]
 sns = [
     { name = "mypy-boto3-sns" },
+]
+ssm = [
+    { name = "mypy-boto3-ssm" },
 ]
 
 [[package]]
@@ -218,6 +221,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ce/fa/8be4773dd636571c8b3620ab15862ebd501a76a0c193b2141acf23c15e82/mypy_boto3_sns-1.40.1.tar.gz", hash = "sha256:e06d89db10c83364096365c630a144d59ca3e0fdb663bbd6b73bd1816d1e53db", size = 33271, upload-time = "2025-08-01T19:29:36.321Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/be/21/e826d138ccbc5d319e2f64bb2872fe583dddf24ad547f47baf834e6d8992/mypy_boto3_sns-1.40.1-py3-none-any.whl", hash = "sha256:538920699f461b6f142b6dd36492b6a27c2113410ed427422122c7da9d2c921a", size = 40184, upload-time = "2025-08-01T19:29:29.944Z" },
+]
+
+[[package]]
+name = "mypy-boto3-ssm"
+version = "1.40.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/9f/64/c9e4830574c2e3e0027cd7158464cab26029dac371f7209cbdd6c4349f1e/mypy_boto3_ssm-1.40.0.tar.gz", hash = "sha256:4a656240ead29ffcfb28e95ce7c7ab6c9bbad71bbe7ce81f328ff9b214ff114b", size = 94639, upload-time = "2025-07-31T19:52:00.42Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0f/59/b93f0a87a11fc126141ddb92d2d29b074d3a26e95c87b2ce204572661b3a/mypy_boto3_ssm-1.40.0-py3-none-any.whl", hash = "sha256:9f7d03feac4d5eb3e551871d49814994a216539845e5a223ea3f6c17945bcf05", size = 96071, upload-time = "2025-07-31T19:51:58.214Z" },
 ]
 
 [[package]]
