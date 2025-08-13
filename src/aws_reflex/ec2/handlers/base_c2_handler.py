@@ -59,9 +59,9 @@ class C2ContainmentHandler(BaseEC2FindingHandler):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.QUARANTINE_SG_ID: str = get_ssm_parameter("/aws-reflex/quarantine_sg_id")
+        self.QUARANTINE_SG_ID: str = get_ssm_parameter("/cloud-warden/quarantine_sg_id")
         self.FORENSICS_TEAM_TOPIC_ARN: str = get_ssm_parameter(
-            "/aws-reflex/forensics_topic_arn"
+            "/cloud-warden/forensics_topic_arn"
         )
 
     def execute(self) -> None:

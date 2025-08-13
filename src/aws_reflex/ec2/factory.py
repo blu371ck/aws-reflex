@@ -21,7 +21,7 @@ def get_ec2_handler(finding: Dict[str, Any]) -> Optional[BaseEC2FindingHandler]:
     Returns:
         A handler object if the finding exists, else none.
     """
-    finding_type: Optional[str] = finding.get("Type")
+    finding_type: Optional[str] = finding.get("type")
     logger.debug(f"Attempting to find handler for finding type: {finding_type}")
 
     HandlerClass: Optional[Type[BaseEC2FindingHandler]] = HANDLER_MAPPING.get(

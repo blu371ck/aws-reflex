@@ -10,3 +10,5 @@ wheels/
 .venv
 aws_reflex_layer/
 lambda/
+
+modeler.ps1

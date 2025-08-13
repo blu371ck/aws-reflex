@@ -38,7 +38,7 @@ class BaseEC2FindingHandler(ABC):
         Raises:
             KeyError: If the instance ID cannot be found in the finding structure.
         """
-        return self.finding["Resource"]["InstanceDetails"]["InstanceId"]
+        return self.finding["resource"]["instanceDetails"]["instanceId"]
 
     def _get_remote_ip(self) -> Optional[str]:
         """Extracts the remote IP address from the finding's service action.
@@ -47,9 +47,9 @@ class BaseEC2FindingHandler(ABC):
             The remote IPv4 address as a string, or None if not found.
         """
         try:
-            return self.finding["Service"]["Action"]["NetworkConnectionAction"][
-                "RemoteIpDetails"
-            ]["IpAddressV4"]
+            return self.finding["service"]["action"]["networkConnectionAction"][
+                "remoteIpDetails"
+            ]["ipAddressV4"]
         except KeyError:
             return None
 
