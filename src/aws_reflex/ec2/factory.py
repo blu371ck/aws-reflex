@@ -3,10 +3,10 @@ HANDLER_MAPPING = {
     "Recon:EC2/PortProbeUnprotectedPort": "<REPLACE_WITH_CLASS_IMPORT>"
 }
 
-def get_handler(finding):
+def get_ec2_handler(finding):
     """
     Factory function to return the appropriate handler instance for a
-    given finding.
+    given EC2 finding.
     """
     finding_type = finding.get('Type')
     HandlerClass = HANDLER_MAPPING.get(finding_type)
