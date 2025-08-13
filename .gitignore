@@ -8,3 +8,5 @@ wheels/
 
 # Virtual environments
 .venv
+aws_reflex_layer/
+lambda/
