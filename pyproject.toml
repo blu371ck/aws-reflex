@@ -7,8 +7,18 @@ authors = [
     { name = "Andrew McKenzie", email = "mckenzie.andrew@pm.me" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "boto3>=1.40.8",
+]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "isort>=6.0.1",
+    "pytest>=8.4.1",
+    "sphinx>=8.2.3",
+]
