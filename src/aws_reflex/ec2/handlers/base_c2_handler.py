@@ -71,16 +71,12 @@ class C2ContainmentHandler(BaseEC2FindingHandler):
         )
 
         try:
-            # Step 1: Containment - Isolate the instance immediately
             self._isolate_instance()
-
-            # Step 2: Preservation - Create a snapshot for forensics
             snapshot_id = self._create_snapshot()
 
             if snapshot_id:
                 self._terminate_instance()
 
-                # Step 4: Reporting - Notify the team with all details
                 self._notify_team(snapshot_id)
 
                 logger.warning(
@@ -94,7 +90,6 @@ class C2ContainmentHandler(BaseEC2FindingHandler):
                 f"Failed to execute C2 containment plan for {self.instance_id}: {e}",
                 exc_info=True,
             )
-            # You might add logic here to alert an operator that the automation failed.
 
     def _isolate_instance(self) -> None:
         """Changes the instance's security group to a quarantine SG."""
