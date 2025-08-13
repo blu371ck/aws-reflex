@@ -46,7 +46,16 @@ This library is intended to be packaged as an **AWS Lambda Layer**.
     cd aws-reflex
     ```
 
-2.  **Create the Layer Package:**
+2.  **Install Requirements:**
+    Use `uv` or `pip` to install requirements from `requirements.txt`
+
+```
+uv pip install -r requirements.txt
+
+pip install -r requirements.txt
+```
+
+3.  **Create the Layer Package:**
     Use `pip` to install the package into a directory structure that Lambda understands.
 
     ```bash
