@@ -1,8 +1,9 @@
 # AWS Reflex 🛡️
 
 [![Python Version](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![uv](https://img.shields.io/badge/managed%20with-uv-blue.svg)](https://github.com/astral-sh/uv)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 An extensible Python library for building automated, event-driven security responses to AWS GuardDuty findings.
 
@@ -79,8 +80,8 @@ The library securely fetches configuration from **AWS Systems Manager (SSM) Para
 
 | Parameter Name                  | Description                                      | Example Value                                                 |
 | ------------------------------- | ------------------------------------------------ | ------------------------------------------------------------- |
-| `/aws-reflex/quarantine_sg_id`  | The ID of the Security Group used for isolation. | `sg-0123456789abcdef0`                                        |
-| `/aws-reflex/forensics_topic_arn` | The ARN of the SNS topic for notifications.      | `arn:aws:sns:us-east-1:111122223333:ForensicsTeamTopic` |
+| `/reflex/quarantine_sg_id`  | The ID of the Security Group used for isolation. | `sg-0123456789abcdef0`                                        |
+| `/reflex/forensics_topic_arn` | The ARN of the SNS topic for notifications.      | `arn:aws:sns:us-east-1:111122223333:ForensicsTeamTopic` |
 
 Your Lambda function's IAM role will need `ssm:GetParameter` permissions for these specific resources.
 
@@ -97,39 +98,55 @@ import json
 import logging
 from typing import Any, Dict
 
-# This import works because the library is in the attached Lambda Layer
+# This import works because the 'aws_reflex' library is provided
+# by the Lambda Layer and is available in the /opt/python path.
 from aws_reflex.ec2 import get_ec2_handler
 
+# Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 def handler(event: Dict[str, Any], context: object) -> Dict[str, Any]:
     """
-    Lambda handler triggered by a GuardDuty finding from EventBridge.
+    Lambda handler triggered by a GuardDuty finding from Amazon EventBridge.
+
+    This function receives the GuardDuty finding, passes it to the aws-reflex
+    library's factory to get the correct handler, and then executes the
+    automated response.
+
+    Args:
+        event: The EventBridge event containing the GuardDuty finding.
+        context: The Lambda runtime context object.
+
+    Returns:
+        A dictionary with a status code and a message.
     """
     logger.info(f"Received event: {json.dumps(event)}")
 
     try:
-        # The GuardDuty finding is nested inside the EventBridge event
-        finding = event.get("detail", {})
+        # The actual GuardDuty finding is nested inside the EventBridge event's 'detail' key.
+        finding = event.get("detail")
         if not finding:
-            logger.warning("Event did not contain a 'detail' key with finding info.")
-            return {"statusCode": 200, "body": "No finding found."}
+            logger.warning("Event did not contain a 'detail' key with finding information.")
+            return {"statusCode": 200, "body": json.dumps("No finding found in event.")}
 
-        # Use the factory to get the correct handler for this finding type
+        # Use the factory from our layer to get the correct handler for this finding type.
         handler_instance = get_ec2_handler(finding)
 
         if handler_instance:
-            # Execute the automated response
+            # If a handler was found, execute its automated response logic.
+            logger.info(f"Executing handler '{type(handler_instance).__name__}' for finding type '{finding.get('type')}'.")
             handler_instance.execute()
         else:
-            logger.info(f"No handler configured for finding type '{finding.get('Type')}'. Ignoring.")
+            # If no handler is configured for this finding type, log it and exit gracefully.
+            logger.info(f"No handler configured for finding type '{finding.get('type')}'. Ignoring.")
 
-        return {"statusCode": 200, "body": "Processing complete."}
+        return {"statusCode": 200, "body": json.dumps("Processing complete.")}
 
     except Exception as e:
-        logger.error(f"An error occurred during handler execution: {e}", exc_info=True)
-        # Re-raise the exception to allow Lambda to handle retries if configured
+        logger.error(f"An unhandled error occurred during handler execution: {e}", exc_info=True)
+        # Re-raise the exception to allow Lambda to handle retries if they are configured
+        # and to mark the invocation as failed.
         raise
 ```
 
@@ -139,7 +156,7 @@ The library is tested using pytest. Tests are located in the `tests/` directory 
 
 Install development dependencies:
 ```
-uv pip install -r requirements-dev.txt
+uv pip install -r requirements.txt
 # or
 pip install pytest pytest-mock boto3-stubs
 ```

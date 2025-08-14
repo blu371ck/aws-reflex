@@ -63,6 +63,41 @@ class C2ContainmentHandler(BaseEC2FindingHandler):
         self.FORENSICS_TEAM_TOPIC_ARN: str = get_ssm_parameter(
             "/cloud-warden/forensics_topic_arn"
         )
+        self.ec2: EC2Client = boto3.client("ec2")
+        self.sns: SNSClient = boto3.client("sns")
+
+    def _is_remediation_in_progress(self) -> bool:
+        """
+        Checks if the instance is already tagged for remediation.
+        """
+        logger.info(
+            f"Checking for existing remediation tag on instance {self.instance_id}."
+        )
+        try:
+            response = self.ec2.describe_tags(
+                Filters=[
+                    {"Name": "resource-id", "Values": [self.instance_id]},
+                    {"Name": "key", "Values": ["RemediationInProgress"]},
+                ]
+            )
+            return len(response.get("Tags", [])) > 0
+        except Exception as e:
+            logger.error(
+                f"Failed to describe tags for instance {self.instance_id}: {e}"
+            )
+            return True
+
+    def _apply_remediation_tag(self) -> None:
+        """
+        Applies a tag to the instance to mark remediation has started.
+        """
+        logger.info(
+            f"Applying 'RemediationInProgress' tag to instance {self.instance_id}."
+        )
+        self.ec2.create_tags(
+            Resources=[self.instance_id],
+            Tags=[{"Key": "RemediationInProgress", "Value": "true"}],
+        )
 
     def execute(self) -> None:
         """
@@ -71,6 +106,14 @@ class C2ContainmentHandler(BaseEC2FindingHandler):
         logger.warning(
             f"Executing C2 containment plan for instance {self.instance_id} due to finding {self.finding.get('Type')}."
         )
+
+        if self._is_remediation_in_progress():
+            logger.warning(
+                f"Remediation for instance {self.instance_id} is already in progress. Skipping."
+            )
+            return
+
+        self._apply_remediation_tag()
 
         try:
             self._isolate_instance()
@@ -98,8 +141,7 @@ class C2ContainmentHandler(BaseEC2FindingHandler):
         logger.info(
             f"Applying quarantine security group '{self.QUARANTINE_SG_ID}' to instance {self.instance_id}."
         )
-        ec2: EC2Client = boto3.client("ec2")
-        ec2.modify_instance_attribute(
+        self.ec2.modify_instance_attribute(
             InstanceId=self.instance_id, Groups=[self.QUARANTINE_SG_ID]
         )
         logger.info(f"Instance {self.instance_id} has been isolated.")
@@ -114,17 +156,16 @@ class C2ContainmentHandler(BaseEC2FindingHandler):
             f"Creating snapshot for root volume of instance {self.instance_id}."
         )
 
-        ec2: EC2Client = boto3.client("ec2")
         try:
 
-            response = ec2.describe_instances(InstanceIds=[self.instance_id])
+            response = self.ec2.describe_instances(InstanceIds=[self.instance_id])
             root_volume_id: str = response["Reservations"][0]["Instances"][0][
                 "BlockDeviceMappings"
             ][0]["Ebs"]["VolumeId"]
 
-            snapshot_response = ec2.create_snapshot(
+            snapshot_response = self.ec2.create_snapshot(
                 VolumeId=root_volume_id,
-                Description=f"Forensic snapshot for instance {self.instance_id} from GuardDuty finding {self.finding.get('Id')}",
+                Description=f"Forensic snapshot for instance {self.instance_id} from GuardDuty finding {self.finding.get('id')}",
             )
 
             snapshot_id: str = snapshot_response["SnapshotId"]
@@ -143,8 +184,7 @@ class C2ContainmentHandler(BaseEC2FindingHandler):
     def _terminate_instance(self) -> None:
         """Terminates the EC2 instance."""
         logger.warning(f"Terminating compromised instance {self.instance_id}.")
-        ec2: EC2Client = boto3.client("ec2")
-        ec2.terminate_instances(InstanceIds=[self.instance_id])
+        self.ec2.terminate_instances(InstanceIds=[self.instance_id])
         logger.warning(f"Instance {self.instance_id} has been terminated.")
 
     def _notify_team(self, snapshot_id: str) -> None:
@@ -166,8 +206,7 @@ class C2ContainmentHandler(BaseEC2FindingHandler):
             f"Please begin forensic analysis on the snapshot."
         )
 
-        sns: SNSClient = boto3.client("sns")
-        sns.publish(
+        self.sns.publish(
             TopicArn=self.FORENSICS_TEAM_TOPIC_ARN,
             Subject=f"Automated C2 Response for Instance {self.instance_id}",
             Message=message,
